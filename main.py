@@ -1,4 +1,5 @@
 import pandas as pd
+from abc import ABC, abstractmethod
 
 hotel_df = pd.read_csv("hotels.csv")
 credit_card_dict = pd.read_csv("cards.csv", dtype=str).to_dict(orient="records")
@@ -6,6 +7,8 @@ card_security_df = pd.read_csv("card_security.csv", dtype=str)
 
 
 class Hotel:
+    watermark = "The Real Estate Company"
+
     def __init__(self, hotel_id):
         self.hotel_id = hotel_id
         self.name = hotel_df.loc[hotel_df["id"] == self.hotel_id, "name"].squeeze()
@@ -23,13 +26,28 @@ class Hotel:
         hotel_df.loc[hotel_df["id"] == self.hotel_id, "available"] = "no"
         hotel_df.to_csv("hotels.csv", index=False)
 
+    @classmethod
+    def count_hotels(cls, data):
+        return len(data)
+
+    def __eq__(self, other):
+        if (self.hotel_id == other.hotel_id):
+            return True
+        return False
+
 
 class SpaHotel(Hotel):
     def book(self):
         return
 
 
-class ReservationTicket:
+class Ticket(ABC):
+    @abstractmethod
+    def generate(self):
+        pass
+
+
+class ReservationTicket(Ticket):
     def __init__(self, name, hotel_object):
         self.name = name
         self.hotel = hotel_object
@@ -39,12 +57,20 @@ class ReservationTicket:
         Thank you for your reservation!
         Here is your confirmation:
         Name: {self.name}
-        Hotel: {self.hotel.name}
+        Hotel: {self.the_customer_name}
         Address: {self.hotel.city}
         """)
 
+    @property
+    def the_customer_name(self):
+        return self.name.strip().title()
 
-class SpaTicket:
+    @staticmethod
+    def convert(amount):
+        return amount*1.2
+
+
+class SpaTicket(Ticket):
     def __init__(self, name, location):
         self.name = name
         self.location = location
